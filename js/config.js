@@ -1,376 +1,246 @@
+/* ============================================================ CRYPTO PREDICTION — CENTRAL CONFIGURATION File: js/config.js ============================================================ */
 
-/**
- * CRYPTO PREDICTION PRO
- * File: js/config.js
- * Version: 1.0.0
- *
- * Strategy: BALANCED
- * Interface: DARK
- * Assets: TOP 50 cryptocurrencies
- * Hosting: GitHub Pages
- */
+window.CryptoConfig = (() => { "use strict";
 
-export const APP_CONFIG = {
-  name: "Crypto Prediction Pro",
-  version: "1.0.0",
-  strategy: "balanced",
-  theme: "dark",
-  currency: "USD",
+const APP = { name: "Crypto Prediction", version: "1.0.0", currency: "USD", locale: "en-US", defaultCoin: "bitcoin", maxCoins: 50, refreshInterval: 30000, requestTimeout: 15000 };
 
-  market: {
-    coinLimit: 50,
-    sortBy: "market_cap_desc",
-    refreshInterval: 30000,
-    historyDays: "max",
-    defaultCoin: "bitcoin",
-    defaultSymbol: "BTC"
-  },
+// ---------------------------------------------------------- // MARKET DATA PROVIDERS // ----------------------------------------------------------
 
-  api: {
-    coingecko: {
-      baseUrl: "https://api.coingecko.com/api/v3",
-      markets: "/coins/markets",
-      history: "/coins/{id}/market_chart",
-      coinDetails: "/coins/{id}",
-      currency: "usd",
-      timeout: 15000
-    },
+const API = { coingecko: { base: "https://api.coingecko.com/api/v3", markets: "/coins/markets", chart: id => /coins/${encodeURIComponent(id)}/market_chart, timeout: 15000 },
 
-    binance: {
-      baseUrl: "https://api.binance.com/api/v3",
-      ticker: "/ticker/24hr",
-      klines: "/klines",
-      enabled: true
-    }
-  },
-
-  chart: {
-    defaultInterval: "1D",
-
-    intervals: {
-      "1D": {
-        label: "1 Day",
-        days: 1,
-        granularity: "hourly"
-      },
-      "7D": {
-        label: "7 Days",
-        days: 7,
-        granularity: "hourly"
-      },
-      "1M": {
-        label: "1 Month",
-        days: 30,
-        granularity: "hourly"
-      },
-      "3M": {
-        label: "3 Months",
-        days: 90,
-        granularity: "daily"
-      },
-      "6M": {
-        label: "6 Months",
-        days: 180,
-        granularity: "daily"
-      },
-      "1Y": {
-        label: "1 Year",
-        days: 365,
-        granularity: "daily"
-      },
-      "2Y": {
-        label: "2 Years",
-        days: 730,
-        granularity: "daily"
-      },
-      "5Y": {
-        label: "5 Years",
-        days: 1825,
-        granularity: "daily"
-      },
-      "MAX": {
-        label: "Maximum",
-        days: "max",
-        granularity: "daily"
-      }
-    },
-
-    appearance: {
-      background: "#0B0E14",
-      panel: "#121722",
-      grid: "#202938",
-      text: "#A7B1C2",
-      bullish: "#00C087",
-      bearish: "#F6465D",
-      crosshair: "#75849B",
-      candleUp: "#00C087",
-      candleDown: "#F6465D",
-      volumeUp: "rgba(0,192,135,0.35)",
-      volumeDown: "rgba(246,70,93,0.35)"
-    },
-
-    crosshair: {
-      enabled: true,
-      mode: "normal",
-      verticalLine: true,
-      horizontalLine: true,
-      showTooltip: true
-    },
-
-    indicatorsVisible: true,
-    volumeVisible: true,
-    autoScale: true
-  },
-
-  indicators: {
-    sma: [20, 50, 100, 200],
-    ema: [9, 12, 21, 50, 200],
-
-    rsi: {
-      period: 14,
-      overbought: 70,
-      oversold: 30
-    },
-
-    macd: {
-      fast: 12,
-      slow: 26,
-      signal: 9
-    },
-
-    bollinger: {
-      period: 20,
-      standardDeviation: 2
-    },
-
-    stochastic: {
-      period: 14,
-      signal: 3,
-      overbought: 80,
-      oversold: 20
-    },
-
-    atr: {
-      period: 14
-    },
-
-    adx: {
-      period: 14,
-      trendThreshold: 25
-    },
-
-    cci: {
-      period: 20
-    },
-
-    williamsR: {
-      period: 14
-    },
-
-    mfi: {
-      period: 14
-    },
-
-    obv: {
-      enabled: true
-    },
-
-    vwap: {
-      enabled: true
-    },
-
-    parabolicSAR: {
-      step: 0.02,
-      maximum: 0.2
-    },
-
-    ichimoku: {
-      conversion: 9,
-      base: 26,
-      spanB: 52,
-      displacement: 26
-    },
-
-    fibonacci: {
-      levels: [
-        0,
-        0.236,
-        0.382,
-        0.5,
-        0.618,
-        0.786,
-        1
-      ]
-    },
-
-    cmf: {
-      period: 20
-    },
-
-    keltner: {
-      emaPeriod: 20,
-      atrPeriod: 10,
-      multiplier: 2
-    }
-  },
-
-  prediction: {
-    strategy: "balanced",
-
-    // Signal score ranges from -100 to +100.
-    thresholds: {
-      strongBuy: 65,
-      buy: 25,
-      hold: -24,
-      sell: -64,
-      strongSell: -65
-    },
-
-    // Relative weights of analytical categories.
-    weights: {
-      trend: 0.30,
-      momentum: 0.25,
-      volume: 0.15,
-      volatility: 0.10,
-      marketStructure: 0.10,
-      multiTimeframe: 0.10
-    },
-
-    // Minimum available confirmations.
-    minimumConfirmations: 3,
-
-    requireVolumeConfirmation: false,
-
-    timeframes: [
-      "1D",
-      "7D",
-      "1M"
-    ],
-
-    displayConfidence: true,
-    displayReasons: true,
-    displayEntry: true,
-    displayStopLoss: true,
-    displayTakeProfit: true
-  },
-
-  risk: {
-    // Analytical reference levels, not automated execution.
-    riskRewardRatio: 2,
-    stopLossATRMultiplier: 1.5,
-    takeProfitATRMultiplier: 3,
-    maxRiskPercent: 1,
-    minimumRiskReward: 1.5
-  },
-
-  dashboard: {
-    defaultView: "overview",
-    showTopGainers: true,
-    showTopLosers: true,
-    showVolumeLeaders: true,
-    showMarketSentiment: true,
-    showTradingSignals: true,
-    enableSearch: true,
-    enableSorting: true,
-    rowsPerPage: 50
-  },
-
-  ui: {
-    theme: "dark",
-
-    colors: {
-      background: "#0B0E14",
-      surface: "#121722",
-      surfaceAlt: "#192230",
-      border: "#273244",
-      text: "#EAECEF",
-      muted: "#848E9C",
-      green: "#00C087",
-      red: "#F6465D",
-      yellow: "#F0B90B",
-      blue: "#3861FB",
-      purple: "#9B59B6"
-    },
-
-    animation: true,
-    responsive: true,
-    compactNumbers: true
-  }
-};
-
-// Shared application constants.
-
-export const SIGNALS = {
-  STRONG_BUY: "STRONG BUY",
-  BUY: "BUY",
-  HOLD: "HOLD",
-  SELL: "SELL",
-  STRONG_SELL: "STRONG SELL"
-};
-
-export const MARKET_COLORS = {
-  bullish: "#00C087",
-  bearish: "#F6465D",
-  neutral: "#848E9C"
-};
-
-export const STORAGE_KEYS = {
-  selectedCoin: "cpp_selected_coin",
-  selectedInterval: "cpp_chart_interval",
-  watchlist: "cpp_watchlist",
-  preferences: "cpp_preferences"
-};
-
-// Helper: retrieve a chart interval configuration.
-
-export function getIntervalConfig(interval) {
-  return (
-    APP_CONFIG.chart.intervals[interval] ||
-    APP_CONFIG.chart.intervals["1D"]
-  );
+binance: {
+  base: "https://api.binance.com/api/v3",
+  klines: "/klines",
+  ticker: "/ticker/24hr"
 }
 
-// Helper: determine signal from a normalized score.
 
-export function getSignal(score) {
-  const t = APP_CONFIG.prediction.thresholds;
+};
 
-  if (score >= t.strongBuy) {
-    return SIGNALS.STRONG_BUY;
-  }
+// ---------------------------------------------------------- // HISTORICAL CHART INTERVALS // ----------------------------------------------------------
 
-  if (score >= t.buy) {
-    return SIGNALS.BUY;
-  }
+const TIMEFRAMES = [ { id: "1D", label: "1D", days: 1, granularity: "hourly" }, { id: "3D", label: "3D", days: 3, granularity: "hourly" }, { id: "1W", label: "1W", days: 7, granularity: "hourly" }, { id: "1M", label: "1M", days: 30, granularity: "daily" }, { id: "3M", label: "3M", days: 90, granularity: "daily" }, { id: "6M", label: "6M", days: 180, granularity: "daily" }, { id: "1Y", label: "1Y", days: 365, granularity: "daily" }, { id: "2Y", label: "2Y", days: 730, granularity: "daily" }, { id: "5Y", label: "5Y", days: 1825, granularity: "daily" }, { id: "MAX", label: "MAX", days: "max", granularity: "daily" } ];
 
-  if (score <= t.strongSell) {
-    return SIGNALS.STRONG_SELL;
-  }
+// ---------------------------------------------------------- // DEFAULT INDICATOR SETTINGS // ----------------------------------------------------------
 
-  if (score <= t.sell) {
-    return SIGNALS.SELL;
-  }
+const INDICATORS = { sma: { enabled: true, periods: [20, 50, 100, 200] },
 
-  return SIGNALS.HOLD;
+ema: {
+  enabled: true,
+  periods: [9, 12, 21, 26, 50, 100, 200]
+},
+
+rsi: {
+  enabled: true,
+  period: 14,
+  overbought: 70,
+  oversold: 30
+},
+
+macd: {
+  enabled: true,
+  fast: 12,
+  slow: 26,
+  signal: 9
+},
+
+bollinger: {
+  enabled: true,
+  period: 20,
+  deviation: 2
+},
+
+stochastic: {
+  enabled: true,
+  period: 14,
+  smoothK: 3,
+  smoothD: 3
+},
+
+atr: {
+  enabled: true,
+  period: 14
+},
+
+adx: {
+  enabled: true,
+  period: 14
+},
+
+cci: {
+  enabled: true,
+  period: 20
+},
+
+williamsR: {
+  enabled: true,
+  period: 14
+},
+
+obv: {
+  enabled: true
+},
+
+vwap: {
+  enabled: true
+},
+
+mfi: {
+  enabled: true,
+  period: 14
+},
+
+supertrend: {
+  enabled: true,
+  period: 10,
+  multiplier: 3
+},
+
+ichimoku: {
+  enabled: true,
+  conversion: 9,
+  base: 26,
+  spanB: 52
+},
+
+parabolicSAR: {
+  enabled: true,
+  step: 0.02,
+  maximum: 0.2
+},
+
+roc: {
+  enabled: true,
+  period: 12
+},
+
+momentum: {
+  enabled: true,
+  period: 10
+},
+
+cmf: {
+  enabled: true,
+  period: 20
 }
 
-// Helper: validate prediction weights.
 
-export function validateWeights(weights = APP_CONFIG.prediction.weights) {
-  const total = Object.values(weights)
-    .reduce((sum, value) => sum + value, 0);
+};
 
-  return Math.abs(total - 1) < 0.0001;
+// ---------------------------------------------------------- // TRADING SIGNAL CONFIGURATION // ----------------------------------------------------------
+
+const SIGNALS = { weights: { trend: 25, momentum: 20, movingAverages: 15, volume: 15, volatility: 10, supportResistance: 10, sentiment: 5 },
+
+thresholds: {
+  strongBuy: 75,
+  buy: 60,
+  hold: 41,
+  sell: 26,
+  strongSell: 0
+},
+
+minimumDataPoints: 200,
+
+riskManagement: {
+  defaultRiskReward: 2,
+  atrStopMultiplier: 2,
+  maximumRiskPercent: 2
 }
 
-// Development diagnostics.
 
-if (!validateWeights()) {
-  console.error(
-    "[Crypto Prediction Pro] Invalid prediction weights."
-  );
+};
+
+// ---------------------------------------------------------- // FORECAST CONFIGURATION // ----------------------------------------------------------
+
+const FORECAST = { horizons: [ { id: "24H", label: "24 Hours", hours: 24 }, { id: "7D", label: "7 Days", hours: 168 }, { id: "30D", label: "30 Days", hours: 720 } ],
+
+models: {
+  linearRegression: true,
+  exponentialSmoothing: true,
+  momentum: true,
+  volatility: true,
+  historicalPatterns: true
+},
+
+minimumSamples: 100,
+confidenceLevels: [0.80, 0.95]
+
+
+};
+
+// ---------------------------------------------------------- // CHART CONFIGURATION // ----------------------------------------------------------
+
+const CHART = { libraryURL: "https://unpkg.com/lightweight-charts@5.0.8/dist/lightweight-charts.standalone.production.js",
+
+layout: {
+  background: "#0B1220",
+  textColor: "#C8D2E1",
+  gridColor: "#1B2738"
+},
+
+colors: {
+  bullish: "#16C784",
+  bearish: "#EA3943",
+  neutral: "#F0B90B",
+  ema: "#F5A623",
+  sma: "#4DA3FF",
+  rsi: "#B084F5",
+  macd: "#26A69A",
+  volume: "#65758B",
+  bollinger: "#9B87F5"
+},
+
+crosshair: {
+  mode: 1,
+  vertLine: {
+    color: "#75849B",
+    width: 1,
+    style: 2,
+    labelBackgroundColor: "#334155"
+  },
+  horzLine: {
+    color: "#75849B",
+    width: 1,
+    style: 2,
+    labelBackgroundColor: "#334155"
+  }
+},
+
+rightPriceScale: {
+  borderColor: "#263449"
+},
+
+timeScale: {
+  borderColor: "#263449",
+  timeVisible: true,
+  secondsVisible: false
 }
 
-console.info(
-  `[${APP_CONFIG.name}] Configuration loaded.`
-);
+
+};
+
+// ---------------------------------------------------------- // MARKET DISPLAY SETTINGS // ----------------------------------------------------------
+
+const MARKET = { sortBy: "market_cap_desc", page: 1, perPage: 50,
+
+sparkline: true,
+
+priceChangePeriods: [
+  "1h",
+  "24h",
+  "7d",
+  "30d"
+]
+
+
+};
+
+// ---------------------------------------------------------- // CACHE SETTINGS // ----------------------------------------------------------
+
+const CACHE = { marketDataTTL: 30000, historicalDataTTL: 300000, maxHistoricalEntries: 100 };
+
+// ---------------------------------------------------------- // APPLICATION EXPORTS // ----------------------------------------------------------
+
+return Object.freeze({ APP, API, TIMEFRAMES, INDICATORS, SIGNALS, FORECAST, CHART, MARKET, CACHE });
+
+})();
