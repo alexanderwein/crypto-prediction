@@ -1,764 +1,579 @@
 
-/*
+/**
  * CRYPTO PREDICTION PRO
  * File: js/api.js
  * Version: 1.0.0
  *
- * Market data API integration.
- * CoinGecko + Binance public market APIs.
+ * Market data provider:
+ * CoinGecko public API
+ * Binance public API (supplementary)
  */
 
 import { APP_CONFIG, getIntervalConfig } from "./config.js";
 
+const CG = APP_CONFIG.api.coingecko;
+const BN = APP_CONFIG.api.binance;
 
-// =====================================
-// API CLIENT
-// =====================================
+// --------------------------------------------------
+// CACHE MANAGEMENT
+// --------------------------------------------------
 
-class CryptoAPI {
+const cache = new Map();
 
-    constructor() {
+const CACHE_DURATION = {
+  markets: 30000,
+  history: 60000,
+  details: 120000,
+  ticker: 15000
+};
 
-        this.cache = new Map();
+function getCached(key) {
+  const entry = cache.get(key);
 
-        this.pendingRequests = new Map();
+  if (!entry) return null;
 
-        this.requestTimeout = APP_CONFIG.api.coingecko.timeout;
+  if (Date.now() - entry.timestamp > entry.duration) {
+    cache.delete(key);
+    return null;
+  }
 
-    }
-
-
-    // =================================
-    // CACHE MANAGEMENT
-    // =================================
-
-    getCache(key) {
-
-        const item = this.cache.get(key);
-
-        if (!item) return null;
-
-        if (Date.now() > item.expires) {
-
-            this.cache.delete(key);
-
-            return null;
-
-        }
-
-        return item.data;
-
-    }
-
-
-    setCache(key, data, duration = APP_CONFIG.api.cacheDuration) {
-
-        this.cache.set(key, {
-
-            data,
-
-            expires: Date.now() + duration
-
-        });
-
-    }
-
-
-    clearCache() {
-
-        this.cache.clear();
-
-    }
-
-
-    // =================================
-    // GENERIC FETCH WITH TIMEOUT
-    // =================================
-
-    async fetchJSON(url, options = {}) {
-
-        const controller = new AbortController();
-
-        const timeout = options.timeout || 15000;
-
-        const timer = setTimeout(
-            () => controller.abort(),
-            timeout
-        );
-
-        try {
-
-            const response = await fetch(url, {
-
-                ...options,
-
-                signal: controller.signal,
-
-                headers: {
-
-                    "Accept": "application/json",
-
-                    ...options.headers
-
-                }
-
-            });
-
-            if (!response.ok) {
-
-                throw new Error(
-                    `API error ${response.status}: ${response.statusText}`
-                );
-
-            }
-
-            return await response.json();
-
-        } finally {
-
-            clearTimeout(timer);
-
-        }
-
-    }
-
-
-    // =================================
-    // RETRY MECHANISM
-    // =================================
-
-    async requestWithRetry(url, options = {}) {
-
-        const maxRetries = APP_CONFIG.api.maxRetries;
-
-        let lastError;
-
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-
-            try {
-
-                return await this.fetchJSON(url, options);
-
-            } catch (error) {
-
-                lastError = error;
-
-                if (attempt === maxRetries) break;
-
-                const delay =
-                    APP_CONFIG.api.retryDelay * (attempt + 1);
-
-                await new Promise(resolve =>
-                    setTimeout(resolve, delay)
-                );
-
-            }
-
-        }
-
-        throw lastError;
-
-    }
-
-
-    // =================================
-    // REQUEST DEDUPLICATION
-    // =================================
-
-    async cachedRequest(key, url, duration) {
-
-        const cached = this.getCache(key);
-
-        if (cached !== null) {
-
-            return cached;
-
-        }
-
-        if (this.pendingRequests.has(key)) {
-
-            return this.pendingRequests.get(key);
-
-        }
-
-        const request = this.requestWithRetry(url)
-            .then(data => {
-
-                this.setCache(key, data, duration);
-
-                return data;
-
-            })
-            .finally(() => {
-
-                this.pendingRequests.delete(key);
-
-            });
-
-        this.pendingRequests.set(key, request);
-
-        return request;
-
-    }
-
-
-    // =================================
-    // COINGECKO: TOP 50 COINS
-    // =================================
-
-    async getTopCoins(limit = APP_CONFIG.market.maxCoins) {
-
-        const params = new URLSearchParams({
-
-            vs_currency: APP_CONFIG.market.currency,
-
-            order: APP_CONFIG.market.topCoinsSort,
-
-            per_page: Math.min(limit, 250),
-
-            page: 1,
-
-            sparkline: APP_CONFIG.market.includeSparkline,
-
-            price_change_percentage: "1h,24h,7d,30d"
-
-        });
-
-        const url =
-            APP_CONFIG.api.coingecko.baseUrl +
-            APP_CONFIG.api.coingecko.coinsEndpoint +
-            "?" + params.toString();
-
-        const data = await this.cachedRequest(
-
-            `top-coins-${limit}`,
-
-            url,
-
-            60000
-
-        );
-
-        return data.map(coin => ({
-
-            id: coin.id,
-
-            name: coin.name,
-
-            symbol: coin.symbol.toUpperCase(),
-
-            image: coin.image,
-
-            price: coin.current_price,
-
-            marketCap: coin.market_cap,
-
-            marketCapRank: coin.market_cap_rank,
-
-            volume24h: coin.total_volume,
-
-            high24h: coin.high_24h,
-
-            low24h: coin.low_24h,
-
-            change1h: coin.price_change_percentage_1h_in_currency,
-
-            change24h: coin.price_change_percentage_24h,
-
-            change7d: coin.price_change_percentage_7d_in_currency,
-
-            change30d: coin.price_change_percentage_30d_in_currency,
-
-            circulatingSupply: coin.circulating_supply,
-
-            totalSupply: coin.total_supply,
-
-            maxSupply: coin.max_supply,
-
-            sparkline: coin.sparkline_in_7d?.price || []
-
-        }));
-
-    }
-
-
-    // =================================
-    // COINGECKO: SINGLE COIN
-    // =================================
-
-    async getCoinDetails(coinId) {
-
-        const url =
-            `${APP_CONFIG.api.coingecko.baseUrl}/coins/${encodeURIComponent(coinId)}` +
-            "?localization=false&tickers=false&market_data=true" +
-            "&community_data=false&developer_data=false";
-
-        return this.cachedRequest(
-
-            `coin-details-${coinId}`,
-
-            url,
-
-            60000
-
-        );
-
-    }
-
-
-    // =================================
-    // COINGECKO: HISTORICAL MARKET DATA
-    // =================================
-
-    async getCoinHistory(coinId, days = 30) {
-
-        const params = new URLSearchParams({
-
-            vs_currency: APP_CONFIG.market.currency,
-
-            days: String(days),
-
-            interval: days <= 1 ? "hourly" : "daily"
-
-        });
-
-        const url =
-            `${APP_CONFIG.api.coingecko.baseUrl}/coins/` +
-            `${encodeURIComponent(coinId)}/market_chart?${params}`;
-
-        return this.cachedRequest(
-
-            `coin-history-${coinId}-${days}`,
-
-            url,
-
-            120000
-
-        );
-
-    }
-
-
-    // =================================
-    // BINANCE: TRADING SYMBOL
-    // =================================
-
-    getBinanceSymbol(symbol) {
-
-        const normalized = String(symbol).toUpperCase();
-
-        return normalized.endsWith("USDT")
-            ? normalized
-            : normalized + "USDT";
-
-    }
-
-
-    // =================================
-    // BINANCE: CURRENT PRICE
-    // =================================
-
-    async getBinancePrice(symbol) {
-
-        const pair = this.getBinanceSymbol(symbol);
-
-        const params = new URLSearchParams({
-
-            symbol: pair
-
-        });
-
-        const url =
-            `${APP_CONFIG.api.binance.baseUrl}/ticker/price?${params}`;
-
-        return this.cachedRequest(
-
-            `binance-price-${pair}`,
-
-            url,
-
-            5000
-
-        );
-
-    }
-
-
-    // =================================
-    // BINANCE: 24H TICKER
-    // =================================
-
-    async getBinanceTicker(symbol) {
-
-        const pair = this.getBinanceSymbol(symbol);
-
-        const params = new URLSearchParams({
-
-            symbol: pair
-
-        });
-
-        const url =
-            `${APP_CONFIG.api.binance.baseUrl}/ticker/24hr?${params}`;
-
-        return this.cachedRequest(
-
-            `binance-ticker-${pair}`,
-
-            url,
-
-            10000
-
-        );
-
-    }
-
-
-    // =================================
-    // BINANCE: HISTORICAL CANDLES
-    // =================================
-
-    async getCandles(symbol, interval = "1d", limit = null) {
-
-        const pair = this.getBinanceSymbol(symbol);
-
-        const intervalConfig = getIntervalConfig(interval);
-
-        const candleLimit = Math.min(
-
-            limit || intervalConfig.limit,
-
-            1000
-
-        );
-
-        const params = new URLSearchParams({
-
-            symbol: pair,
-
-            interval: intervalConfig.binanceInterval,
-
-            limit: String(candleLimit)
-
-        });
-
-        const url =
-            `${APP_CONFIG.api.binance.baseUrl}` +
-            `${APP_CONFIG.api.binance.klinesEndpoint}?${params}`;
-
-        const data = await this.cachedRequest(
-
-            `candles-${pair}-${interval}-${candleLimit}`,
-
-            url,
-
-            30000
-
-        );
-
-        return data.map(candle => ({
-
-            time: Math.floor(candle[0] / 1000),
-
-            open: Number(candle[1]),
-
-            high: Number(candle[2]),
-
-            low: Number(candle[3]),
-
-            close: Number(candle[4]),
-
-            volume: Number(candle[5]),
-
-            closeTime: Math.floor(candle[6] / 1000),
-
-            quoteVolume: Number(candle[7]),
-
-            trades: Number(candle[8])
-
-        }));
-
-    }
-
-
-    // =================================
-    // BINANCE: MAXIMUM AVAILABLE HISTORY
-    // =================================
-
-    async getMaximumCandles(symbol) {
-
-        const pair = this.getBinanceSymbol(symbol);
-
-        const url =
-            `${APP_CONFIG.api.binance.baseUrl}` +
-            `${APP_CONFIG.api.binance.klinesEndpoint}` +
-            `?symbol=${encodeURIComponent(pair)}` +
-            "&interval=1M&limit=1000";
-
-        const data = await this.cachedRequest(
-
-            `candles-max-${pair}`,
-
-            url,
-
-            300000
-
-        );
-
-        return data.map(candle => ({
-
-            time: Math.floor(candle[0] / 1000),
-
-            open: Number(candle[1]),
-
-            high: Number(candle[2]),
-
-            low: Number(candle[3]),
-
-            close: Number(candle[4]),
-
-            volume: Number(candle[5]),
-
-            closeTime: Math.floor(candle[6] / 1000),
-
-            quoteVolume: Number(candle[7]),
-
-            trades: Number(candle[8])
-
-        }));
-
-    }
-
-
-    // =================================
-    // BINANCE: EXCHANGE SYMBOL CHECK
-    // =================================
-
-    async getExchangeInfo(symbol) {
-
-        const pair = this.getBinanceSymbol(symbol);
-
-        const url =
-            `${APP_CONFIG.api.binance.baseUrl}` +
-            `${APP_CONFIG.api.binance.exchangeInfoEndpoint}` +
-            `?symbol=${encodeURIComponent(pair)}`;
-
-        return this.cachedRequest(
-
-            `exchange-info-${pair}`,
-
-            url,
-
-            300000
-
-        );
-
-    }
-
-
-    // =================================
-    // CHART HISTORY ROUTER
-    // =================================
-
-    async getChartData(symbol, interval = "1d", coinId = null) {
-
-        try {
-
-            if (interval === "max") {
-
-                return await this.getMaximumCandles(symbol);
-
-            }
-
-            return await this.getCandles(symbol, interval);
-
-        } catch (binanceError) {
-
-            console.warn(
-
-                `Binance history unavailable for ${symbol}.`,
-                binanceError.message
-
-            );
-
-            if (!coinId) {
-
-                throw binanceError;
-
-            }
-
-            const intervalConfig = getIntervalConfig(interval);
-
-            const history = await this.getCoinHistory(
-
-                coinId,
-
-                intervalConfig.days
-
-            );
-
-            return this.convertCoinGeckoHistory(history);
-
-        }
-
-    }
-
-
-    // =================================
-    // CONVERT COINGECKO HISTORY
-    // =================================
-
-    convertCoinGeckoHistory(data) {
-
-        if (!data?.prices?.length) {
-
-            return [];
-
-        }
-
-        const volumes = new Map(
-
-            (data.total_volumes || []).map(item => [
-
-                Math.floor(item[0] / 1000),
-
-                Number(item[1])
-
-            ])
-
-        );
-
-        const marketCaps = new Map(
-
-            (data.market_caps || []).map(item => [
-
-                Math.floor(item[0] / 1000),
-
-                Number(item[1])
-
-            ])
-
-        );
-
-        return data.prices.map((item, index, array) => {
-
-            const time = Math.floor(item[0] / 1000);
-
-            const price = Number(item[1]);
-
-            const previousPrice = index > 0
-                ? Number(array[index - 1][1])
-                : price;
-
-            const nextPrice = index < array.length - 1
-                ? Number(array[index + 1][1])
-                : price;
-
-            return {
-
-                time,
-
-                open: previousPrice,
-
-                high: Math.max(previousPrice, price, nextPrice),
-
-                low: Math.min(previousPrice, price, nextPrice),
-
-                close: price,
-
-                volume: volumes.get(time) || 0,
-
-                marketCap: marketCaps.get(time) || 0
-
-            };
-
-        });
-
-    }
-
-
-    // =================================
-    // MARKET STATUS
-    // =================================
-
-    async checkConnection() {
-
-        try {
-
-            const response = await fetch(
-
-                `${APP_CONFIG.api.binance.baseUrl}/ping`,
-
-                { method: "GET" }
-
-            );
-
-            return {
-
-                connected: response.ok,
-
-                provider: "Binance",
-
-                timestamp: Date.now()
-
-            };
-
-        } catch (error) {
-
-            return {
-
-                connected: false,
-
-                provider: "Binance",
-
-                error: error.message,
-
-                timestamp: Date.now()
-
-            };
-
-        }
-
-    }
-
+  return entry.data;
 }
 
+function setCached(key, data, duration) {
+  cache.set(key, {
+    data,
+    timestamp: Date.now(),
+    duration
+  });
 
-// =====================================
-// SINGLETON INSTANCE
-// =====================================
+  return data;
+}
 
-export const cryptoAPI = new CryptoAPI();
+export function clearCache() {
+  cache.clear();
+}
 
+// --------------------------------------------------
+// HTTP REQUEST ENGINE
+// --------------------------------------------------
 
-// =====================================
-// PUBLIC API FUNCTIONS
-// =====================================
+async function request(url, options = {}) {
+  const controller = new AbortController();
 
-export const getTopCoins = limit =>
-    cryptoAPI.getTopCoins(limit);
+  const timeout = setTimeout(
+    () => controller.abort(),
+    options.timeout || CG.timeout
+  );
 
-export const getCoinDetails = id =>
-    cryptoAPI.getCoinDetails(id);
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        ...options.headers
+      },
+      signal: controller.signal
+    });
 
-export const getCoinHistory = (id, days) =>
-    cryptoAPI.getCoinHistory(id, days);
+    if (!response.ok) {
+      throw new Error(
+        `API error ${response.status}: ${response.statusText}`
+      );
+    }
 
-export const getCandles = (symbol, interval, limit) =>
-    cryptoAPI.getCandles(symbol, interval, limit);
+    return await response.json();
 
-export const getChartData = (symbol, interval, coinId) =>
-    cryptoAPI.getChartData(symbol, interval, coinId);
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error("Market data request timed out.");
+    }
 
-export const getMaximumCandles = symbol =>
-    cryptoAPI.getMaximumCandles(symbol);
+    throw error;
 
-export const getBinancePrice = symbol =>
-    cryptoAPI.getBinancePrice(symbol);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
-export const getBinanceTicker = symbol =>
-    cryptoAPI.getBinanceTicker(symbol);
+// --------------------------------------------------
+// COINGECKO URL BUILDER
+// --------------------------------------------------
 
-export const checkAPIConnection = () =>
-    cryptoAPI.checkConnection();
+function cgUrl(endpoint, params = {}) {
+  const url = new URL(CG.baseUrl + endpoint);
 
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      url.searchParams.set(key, String(value));
+    }
+  });
+
+  return url.toString();
+}
+
+// --------------------------------------------------
+// TOP 50 CRYPTOCURRENCIES
+// --------------------------------------------------
+
+export async function getTopCoins(forceRefresh = false) {
+  const key = "top_coins";
+
+  if (!forceRefresh) {
+    const cached = getCached(key);
+    if (cached) return cached;
+  }
+
+  const url = cgUrl(CG.markets, {
+    vs_currency: "usd",
+    order: "market_cap_desc",
+    per_page: APP_CONFIG.market.coinLimit,
+    page: 1,
+    sparkline: true,
+    price_change_percentage: "1h,24h,7d,30d"
+  });
+
+  const data = await request(url);
+
+  const normalized = data.map(normalizeCoin);
+
+  return setCached(
+    key,
+    normalized,
+    CACHE_DURATION.markets
+  );
+}
+
+// --------------------------------------------------
+// COIN NORMALIZATION
+// --------------------------------------------------
+
+export function normalizeCoin(coin) {
+  return {
+    id: coin.id,
+    symbol: String(coin.symbol || "").toUpperCase(),
+    name: coin.name,
+
+    image: coin.image || null,
+
+    price: Number(coin.current_price) || 0,
+
+    marketCap: Number(coin.market_cap) || 0,
+
+    marketCapRank: coin.market_cap_rank || null,
+
+    volume24h: Number(coin.total_volume) || 0,
+
+    high24h: Number(coin.high_24h) || 0,
+
+    low24h: Number(coin.low_24h) || 0,
+
+    change1h: Number(
+      coin.price_change_percentage_1h_in_currency
+    ) || 0,
+
+    change24h: Number(
+      coin.price_change_percentage_24h
+    ) || 0,
+
+    change7d: Number(
+      coin.price_change_percentage_7d_in_currency
+    ) || 0,
+
+    change30d: Number(
+      coin.price_change_percentage_30d_in_currency
+    ) || 0,
+
+    circulatingSupply:
+      Number(coin.circulating_supply) || 0,
+
+    totalSupply:
+      coin.total_supply === null
+        ? null
+        : Number(coin.total_supply) || 0,
+
+    maxSupply:
+      coin.max_supply === null
+        ? null
+        : Number(coin.max_supply) || 0,
+
+    ath: Number(coin.ath) || 0,
+
+    athChange: Number(coin.ath_change_percentage) || 0,
+
+    sparkline: coin.sparkline_in_7d?.price || [],
+
+    lastUpdated: coin.last_updated || null
+  };
+}
+
+// --------------------------------------------------
+// SINGLE COIN DETAILS
+// --------------------------------------------------
+
+export async function getCoinDetails(
+  coinId,
+  forceRefresh = false
+) {
+  const key = `details_${coinId}`;
+
+  if (!forceRefresh) {
+    const cached = getCached(key);
+    if (cached) return cached;
+  }
+
+  const url = cgUrl(
+    CG.coinDetails.replace("{id}", encodeURIComponent(coinId)),
+    {
+      localization: false,
+      tickers: false,
+      market_data: true,
+      community_data: false,
+      developer_data: false,
+      sparkline: true
+    }
+  );
+
+  const data = await request(url);
+
+  return setCached(
+    key,
+    data,
+    CACHE_DURATION.details
+  );
+}
+
+// --------------------------------------------------
+// HISTORICAL MARKET DATA
+// --------------------------------------------------
+
+export async function getMarketHistory(
+  coinId,
+  interval = APP_CONFIG.chart.defaultInterval,
+  forceRefresh = false
+) {
+  const intervalConfig = getIntervalConfig(interval);
+
+  const key = `history_${coinId}_${interval}`;
+
+  if (!forceRefresh) {
+    const cached = getCached(key);
+    if (cached) return cached;
+  }
+
+  const params = {
+    vs_currency: "usd",
+    interval: "daily"
+  };
+
+  if (intervalConfig.days === "max") {
+    params.days = "max";
+    delete params.interval;
+  } else {
+    params.days = intervalConfig.days;
+  }
+
+  const url = cgUrl(
+    CG.history.replace(
+      "{id}",
+      encodeURIComponent(coinId)
+    ),
+    params
+  );
+
+  const data = await request(url);
+
+  const history = normalizeHistory(data);
+
+  return setCached(
+    key,
+    history,
+    CACHE_DURATION.history
+  );
+}
+
+// --------------------------------------------------
+// HISTORY NORMALIZATION
+// --------------------------------------------------
+
+export function normalizeHistory(data) {
+  const prices = data.prices || [];
+  const volumes = data.total_volumes || [];
+  const marketCaps = data.market_caps || [];
+
+  const volumeMap = new Map(
+    volumes.map(item => [item[0], item[1]])
+  );
+
+  const capMap = new Map(
+    marketCaps.map(item => [item[0], item[1]])
+  );
+
+  return prices.map(([timestamp, price]) => ({
+    time: Math.floor(timestamp / 1000),
+
+    timestamp,
+
+    price: Number(price),
+
+    volume: Number(
+      volumeMap.get(timestamp) || 0
+    ),
+
+    marketCap: Number(
+      capMap.get(timestamp) || 0
+    )
+  })).filter(item =>
+    Number.isFinite(item.time) &&
+    Number.isFinite(item.price) &&
+    item.price > 0
+  );
+}
+
+// --------------------------------------------------
+// BINANCE SYMBOL MAPPING
+// --------------------------------------------------
+
+export function toBinanceSymbol(symbol) {
+  return `${String(symbol).toUpperCase()}USDT`;
+}
+
+// --------------------------------------------------
+// BINANCE 24-HOUR TICKER
+// --------------------------------------------------
+
+export async function getBinanceTicker(
+  symbol,
+  forceRefresh = false
+) {
+  if (!BN.enabled) return null;
+
+  const pair = toBinanceSymbol(symbol);
+  const key = `binance_${pair}`;
+
+  if (!forceRefresh) {
+    const cached = getCached(key);
+    if (cached) return cached;
+  }
+
+  try {
+    const url = BN.baseUrl + BN.ticker +
+      "?symbol=" + encodeURIComponent(pair);
+
+    const data = await request(url, {
+      timeout: 10000
+    });
+
+    const normalized = {
+      symbol: data.symbol,
+
+      price: Number(data.lastPrice),
+
+      change24h: Number(
+        data.priceChangePercent
+      ),
+
+      high24h: Number(data.highPrice),
+
+      low24h: Number(data.lowPrice),
+
+      volume24h: Number(data.quoteVolume),
+
+      trades: Number(data.count),
+
+      timestamp: data.closeTime
+    };
+
+    return setCached(
+      key,
+      normalized,
+      CACHE_DURATION.ticker
+    );
+
+  } catch (error) {
+    console.warn(
+      `[Binance] Ticker unavailable for ${pair}:`,
+      error.message
+    );
+
+    return null;
+  }
+}
+
+// --------------------------------------------------
+// BINANCE HISTORICAL CANDLES
+// --------------------------------------------------
+
+export async function getBinanceCandles(
+  symbol,
+  interval = "1d",
+  limit = 1000
+) {
+  if (!BN.enabled) return [];
+
+  const pair = toBinanceSymbol(symbol);
+
+  const allowedIntervals = [
+    "1m", "5m", "15m", "30m",
+    "1h", "4h", "1d", "1w", "1M"
+  ];
+
+  if (!allowedIntervals.includes(interval)) {
+    throw new Error("Unsupported Binance interval.");
+  }
+
+  const url = BN.baseUrl + BN.klines +
+    `?symbol=${encodeURIComponent(pair)}` +
+    `&interval=${interval}` +
+    `&limit=${Math.min(Math.max(limit, 1), 1000)}`;
+
+  try {
+    const data = await request(url, {
+      timeout: 10000
+    });
+
+    return data.map(candle => ({
+      time: Math.floor(candle[0] / 1000),
+
+      open: Number(candle[1]),
+      high: Number(candle[2]),
+      low: Number(candle[3]),
+      close: Number(candle[4]),
+
+      volume: Number(candle[5]),
+
+      closeTime: candle[6],
+
+      quoteVolume: Number(candle[7]),
+
+      trades: Number(candle[8])
+    }));
+
+  } catch (error) {
+    console.warn(
+      `[Binance] Candles unavailable for ${pair}:`,
+      error.message
+    );
+
+    return [];
+  }
+}
+
+// --------------------------------------------------
+// LIVE MARKET SNAPSHOT
+// --------------------------------------------------
+
+export async function getMarketSnapshot() {
+  const coins = await getTopCoins();
+
+  const totalMarketCap = coins.reduce(
+    (sum, coin) => sum + coin.marketCap,
+    0
+  );
+
+  const totalVolume = coins.reduce(
+    (sum, coin) => sum + coin.volume24h,
+    0
+  );
+
+  const gainers = [...coins]
+    .sort((a, b) => b.change24h - a.change24h)
+    .slice(0, 5);
+
+  const losers = [...coins]
+    .sort((a, b) => a.change24h - b.change24h)
+    .slice(0, 5);
+
+  const bullish = coins.filter(
+    coin => coin.change24h > 0
+  ).length;
+
+  const bearish = coins.filter(
+    coin => coin.change24h < 0
+  ).length;
+
+  return {
+    coins,
+
+    totalMarketCap,
+
+    totalVolume,
+
+    gainers,
+
+    losers,
+
+    bullish,
+
+    bearish,
+
+    neutral: coins.length - bullish - bearish,
+
+    timestamp: Date.now()
+  };
+}
+
+// --------------------------------------------------
+// API HEALTH CHECK
+// --------------------------------------------------
+
+export async function checkApiStatus() {
+  try {
+    const url = cgUrl(CG.markets, {
+      vs_currency: "usd",
+      order: "market_cap_desc",
+      per_page: 1,
+      page: 1
+    });
+
+    await request(url, {
+      timeout: 10000
+    });
+
+    return {
+      provider: "CoinGecko",
+      status: "online",
+      timestamp: Date.now()
+    };
+
+  } catch (error) {
+    return {
+      provider: "CoinGecko",
+      status: "offline",
+      error: error.message,
+      timestamp: Date.now()
+    };
+  }
+}
+
+// --------------------------------------------------
+// UTILITY: FORMAT NUMBERS
+// --------------------------------------------------
+
+export function formatPrice(value) {
+  if (!Number.isFinite(Number(value))) return "—";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits:
+      value < 1 ? 6 : 2
+  }).format(value);
+}
+
+export function formatCompact(value) {
+  if (!Number.isFinite(Number(value))) return "—";
+
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
+export function formatPercentage(value) {
+  if (!Number.isFinite(Number(value))) return "—";
+
+  const sign = value > 0 ? "+" : "";
+
+  return `${sign}${Number(value).toFixed(2)}%`;
+}
