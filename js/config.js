@@ -1,356 +1,266 @@
 
 /*
- * CRYPTO PREDICTION
+ * CRYPTO PREDICTION PRO
  * File: js/config.js
  * Version: 1.0.0
  *
- * Central configuration for the trading dashboard.
- * Browser-only application. No installation required.
+ * Global application configuration.
+ * GitHub Pages compatible.
  */
 
 export const APP_CONFIG = {
 
-    // --------------------------------------------------
-    // APPLICATION
-    // --------------------------------------------------
-
-    name: "Crypto Prediction",
+    name: "Crypto Prediction Pro",
     version: "1.0.0",
-    description: "Advanced Cryptocurrency Market Intelligence",
 
-    currency: "USD",
-    locale: "en-US",
-    timezone: "UTC",
-
+    mode: "paper",
     theme: "dark",
 
     debug: false,
 
+    // =====================================
+    // MARKET CONFIGURATION
+    // =====================================
 
-    // --------------------------------------------------
-    // MARKET DATA PROVIDERS
-    // --------------------------------------------------
+    market: {
 
-    API: {
-
-        coingecko: {
-            baseUrl: "https://api.coingecko.com/api/v3",
-
-            markets: "/coins/markets",
-
-            coinList: "/coins/list",
-
-            marketChart: "/coins/{id}/market_chart",
-
-            coinDetails: "/coins/{id}",
-
-            global: "/global",
-
-            currency: "usd",
-
-            defaultDays: 1
-        },
-
-        binance: {
-            baseUrl: "https://api.binance.com/api/v3",
-
-            klines: "/klines",
-
-            ticker: "/ticker/24hr",
-
-            exchangeInfo: "/exchangeInfo",
-
-            enabled: true
-        },
-
-        refresh: {
-            market: 60000,
-            prices: 15000,
-            chart: 30000,
-            signals: 60000
-        },
-
-        timeout: 15000,
-
-        retryAttempts: 3,
-
-        retryDelay: 2000
-    },
-
-
-    // --------------------------------------------------
-    // TOP 50 CRYPTOCURRENCY SCANNER
-    // --------------------------------------------------
-
-    MARKET: {
-
-        limit: 50,
-
-        order: "market_cap_desc",
+        maxCoins: 50,
 
         currency: "usd",
 
+        quoteCurrency: "USDT",
+
+        defaultCoin: "bitcoin",
+
+        refreshInterval: 60000,
+
+        priceRefreshInterval: 30000,
+
+        marketRefreshInterval: 120000,
+
+        topCoinsSort: "market_cap_desc",
+
         includeSparkline: true,
 
-        priceChangePeriods: [
-            "1h",
-            "24h",
-            "7d",
-            "30d",
-            "1y"
-        ],
+        pricePrecision: 8
 
-        coins: [
-
-            "bitcoin",
-            "ethereum",
-            "tether",
-            "binancecoin",
-            "ripple",
-            "usd-coin",
-            "solana",
-            "tron",
-            "dogecoin",
-            "cardano",
-
-            "bitcoin-cash",
-            "chainlink",
-            "stellar",
-            "sui",
-            "avalanche-2",
-            "shiba-inu",
-            "toncoin",
-            "hedera-hashgraph",
-            "litecoin",
-            "polkadot",
-
-            "uniswap",
-            "monero",
-            "bitcoin-cash",
-            "near",
-            "aptos",
-            "ethereum-classic",
-            "internet-computer",
-            "filecoin",
-            "cosmos",
-            "arbitrum",
-
-            "aave",
-            "bittensor",
-            "render-token",
-            "optimism",
-            "mantle",
-            "vechain",
-            "maker",
-            "injective-protocol",
-            "the-graph",
-            "algorand",
-
-            "fantom",
-            "theta-token",
-            "axie-infinity",
-            "decentraland",
-            "flow",
-            "eos",
-            "tezos",
-            "quant-network",
-            "immutable-x",
-            "celestia"
-        ],
-
-        // The scanner will use live market-cap ranking.
-        // This list is a fallback universe, not a guaranteed
-        // representation of the current top 50.
-        useLiveRanking: true
     },
 
+    // =====================================
+    // API CONFIGURATION
+    // =====================================
 
-    // --------------------------------------------------
+    api: {
+
+        coingecko: {
+
+            baseUrl: "https://api.coingecko.com/api/v3",
+
+            coinsEndpoint: "/coins/markets",
+
+            historyEndpoint: "/coins",
+
+            timeout: 15000
+
+        },
+
+        binance: {
+
+            baseUrl: "https://api.binance.com/api/v3",
+
+            klinesEndpoint: "/klines",
+
+            tickerEndpoint: "/ticker/24hr",
+
+            exchangeInfoEndpoint: "/exchangeInfo",
+
+            timeout: 15000
+
+        },
+
+        cacheDuration: 30000,
+
+        maxRetries: 3,
+
+        retryDelay: 2000
+
+    },
+
+    // =====================================
+    // TOP 50 MARKET CONFIGURATION
+    // =====================================
+
+    coinLimit: 50,
+
+    // =====================================
     // CHART CONFIGURATION
-    // --------------------------------------------------
+    // =====================================
 
-    CHART: {
+    charts: {
 
-        library: "LightweightCharts",
+        library: "lightweight-charts",
 
-        theme: "dark",
+        defaultInterval: "1d",
 
-        background: "#0B0E14",
+        defaultChartType: "candlestick",
 
-        textColor: "#D1D4DC",
+        showCrosshair: true,
 
-        gridColor: "#1E2530",
+        showVolume: true,
 
-        upColor: "#16C784",
+        showGrid: true,
 
-        downColor: "#EA3943",
+        showPriceLine: true,
 
-        wickUpColor: "#16C784",
-
-        wickDownColor: "#EA3943",
-
-        crosshair: {
-            enabled: true,
-            mode: "normal",
-            verticalLineColor: "#758696",
-            horizontalLineColor: "#758696",
-            labelBackground: "#263238"
-        },
-
-        candles: {
-            enabled: true,
-            borderVisible: false,
-            wickVisible: true
-        },
-
-        volume: {
-            enabled: true,
-            height: 0.18
-        },
+        showTimeScale: true,
 
         autoResize: true,
 
-        rightPriceScale: true,
+        chartHeight: 520,
 
-        timeScale: true,
+        // Available chart periods.
+        // MAX means maximum history available
+        // from the selected data provider.
 
-        grid: true,
+        intervals: {
 
-        animations: false
-    },
+            "1d": {
+                label: "1D",
+                days: 1,
+                binanceInterval: "1h",
+                limit: 24
+            },
 
+            "7d": {
+                label: "7D",
+                days: 7,
+                binanceInterval: "4h",
+                limit: 42
+            },
 
-    // --------------------------------------------------
-    // TIME RANGE SELECTORS
-    // --------------------------------------------------
+            "1m": {
+                label: "1M",
+                days: 30,
+                binanceInterval: "1d",
+                limit: 30
+            },
 
-    TIME_RANGES: [
+            "3m": {
+                label: "3M",
+                days: 90,
+                binanceInterval: "1d",
+                limit: 90
+            },
 
-        {
-            label: "1D",
-            days: 1,
-            interval: "5m"
-        },
+            "6m": {
+                label: "6M",
+                days: 180,
+                binanceInterval: "1d",
+                limit: 180
+            },
 
-        {
-            label: "7D",
-            days: 7,
-            interval: "15m"
-        },
+            "1y": {
+                label: "1Y",
+                days: 365,
+                binanceInterval: "1d",
+                limit: 365
+            },
 
-        {
-            label: "1M",
-            days: 30,
-            interval: "1h"
-        },
+            "3y": {
+                label: "3Y",
+                days: 1095,
+                binanceInterval: "1w",
+                limit: 156
+            },
 
-        {
-            label: "3M",
-            days: 90,
-            interval: "4h"
-        },
+            "5y": {
+                label: "5Y",
+                days: 1825,
+                binanceInterval: "1w",
+                limit: 260
+            },
 
-        {
-            label: "6M",
-            days: 180,
-            interval: "4h"
-        },
+            "max": {
+                label: "MAX",
+                days: Infinity,
+                binanceInterval: "1M",
+                limit: 1000
+            }
 
-        {
-            label: "1Y",
-            days: 365,
-            interval: "1d"
-        },
-
-        {
-            label: "MAX",
-            days: "max",
-            interval: "1d"
         }
 
-    ],
+    },
 
-
-    // --------------------------------------------------
+    // =====================================
     // TECHNICAL INDICATORS
-    // --------------------------------------------------
+    // =====================================
 
-    INDICATORS: {
+    indicators: {
 
-        movingAverages: {
+        enabledByDefault: true,
+
+        trend: {
+
             sma: [20, 50, 100, 200],
-            ema: [9, 12, 21, 26, 50, 200]
+
+            ema: [9, 12, 21, 50, 100, 200],
+
+            parabolicSAR: true,
+
+            ichimoku: true
+
         },
 
         momentum: {
 
-            rsi: {
-                periods: [7, 14, 21],
-                overbought: 70,
-                oversold: 30
-            },
+            rsi: [7, 14, 21],
 
             macd: {
+
                 fast: 12,
+
                 slow: 26,
+
                 signal: 9
+
             },
 
-            stochasticRSI: {
-                rsiPeriod: 14,
-                stochasticPeriod: 14,
+            stochastic: {
+
+                period: 14,
+
                 smoothK: 3,
+
                 smoothD: 3
+
             },
 
-            cci: {
-                period: 20
-            },
+            stochasticRSI: true
 
-            williamsR: {
-                period: 14
-            }
         },
 
         volatility: {
 
-            bollinger: {
+            bollingerBands: {
+
                 period: 20,
+
                 standardDeviation: 2
+
             },
 
-            atr: {
-                period: 14
-            },
+            atr: 14,
 
-            keltner: {
-                period: 20,
-                multiplier: 2
-            },
+            keltnerChannels: true
 
-            donchian: {
-                period: 20
-            }
         },
 
-        trend: {
+        strength: {
 
-            adx: {
-                period: 14,
-                strongTrend: 25
-            },
+            adx: 14,
 
-            ichimoku: {
-                conversion: 9,
-                base: 26,
-                spanB: 52,
-                displacement: 26
-            },
+            dmi: true
 
-            parabolicSAR: {
-                step: 0.02,
-                maximum: 0.2
-            }
         },
 
         volume: {
@@ -359,62 +269,33 @@ export const APP_CONFIG = {
 
             vwap: true,
 
-            volumeOscillator: {
-                shortPeriod: 5,
-                longPeriod: 20
-            }
+            volumeSMA: 20
+
         },
 
-        supportResistance: {
+        priceLevels: {
 
-            fibonacci: [
-                0,
-                0.236,
-                0.382,
-                0.5,
-                0.618,
-                0.786,
-                1
-            ],
+            fibonacci: true,
 
             pivotPoints: true,
 
-            lookback: 100
+            supportResistance: true
+
         }
+
     },
 
+    // =====================================
+    // PREDICTION ENGINE
+    // =====================================
 
-    // --------------------------------------------------
-    // TRADING SIGNAL ENGINE
-    // --------------------------------------------------
-
-    SIGNALS: {
+    prediction: {
 
         enabled: true,
 
-        categories: [
-            "STRONG BUY",
-            "BUY",
-            "HOLD",
-            "SELL",
-            "STRONG SELL"
-        ],
+        model: "advanced-technical-analysis",
 
-        thresholds: {
-
-            strongBuy: 75,
-
-            buy: 60,
-
-            hold: 40,
-
-            sell: 25,
-
-            strongSell: 24
-        },
-
-        // Indicator contribution weights.
-        // Total weight = 100.
+        minimumConfidence: 55,
 
         weights: {
 
@@ -422,289 +303,365 @@ export const APP_CONFIG = {
 
             momentum: 25,
 
-            volatility: 10,
-
             volume: 15,
+
+            volatility: 10,
 
             supportResistance: 10,
 
             multiTimeframe: 10
+
         },
 
-        confirmation: {
+        thresholds: {
 
-            minimumIndicators: 3,
+            strongBuy: 70,
 
-            requireTrendConfirmation: true,
+            buy: 30,
 
-            requireVolumeConfirmation: false,
+            hold: -29,
 
-            avoidOverboughtEntries: true,
+            sell: -30,
 
-            avoidOversoldExits: true
+            strongSell: -70
+
         },
 
-        confidence: {
+        useMultipleTimeframes: true,
 
-            minimum: 50,
+        timeframes: [
 
-            high: 75,
-
-            veryHigh: 90
-        }
-    },
-
-
-    // --------------------------------------------------
-    // MULTI-TIMEFRAME ANALYSIS
-    // --------------------------------------------------
-
-    MULTI_TIMEFRAME: {
-
-        enabled: true,
-
-        periods: [
-
-            "15m",
-            "1h",
-            "4h",
             "1d",
-            "1w"
-        ],
 
-        primary: "4h",
+            "7d",
 
-        trendConfirmation: [
-            "1h",
-            "4h",
-            "1d"
-        ]
-    },
-
-
-    // --------------------------------------------------
-    // FORECASTING
-    // --------------------------------------------------
-
-    FORECAST: {
-
-        enabled: true,
-
-        horizons: [
-
-            {
-                label: "SHORT TERM",
-                days: 7
-            },
-
-            {
-                label: "MEDIUM TERM",
-                days: 30
-            },
-
-            {
-                label: "LONG TERM",
-                days: 90
-            }
+            "1m"
 
         ],
 
-        displayProbability: true,
+        calculateTrendStrength: true,
 
-        displayConfidence: true,
+        calculateRiskReward: true,
 
-        displaySupportResistance: true,
+        calculateSupportResistance: true,
 
-        backtesting: true,
+        calculateEntryZones: true,
 
-        minimumHistoricalSamples: 100
+        calculateStopLoss: true,
+
+        calculateTakeProfit: true
+
     },
 
+    // =====================================
+    // PAPER TRADING
+    // =====================================
 
-    // --------------------------------------------------
-    // RISK MANAGEMENT
-    // --------------------------------------------------
-
-    RISK: {
-
-        enabled: true,
-
-        defaultRiskPercent: 1,
-
-        maximumRiskPercent: 2,
-
-        stopLoss: true,
-
-        takeProfit: true,
-
-        riskRewardRatio: 2,
-
-        showPositionSizing: true,
-
-        paperTradingOnly: true
-    },
-
-
-    // --------------------------------------------------
-    // PORTFOLIO AND WATCHLIST
-    // --------------------------------------------------
-
-    PORTFOLIO: {
+    paperTrading: {
 
         enabled: true,
-
-        mode: "simulation",
 
         initialBalance: 10000,
 
-        currency: "USD",
+        currency: "USDT",
+
+        defaultTradeAmount: 500,
+
+        maxPositionPercentage: 20,
+
+        commission: 0.001,
+
+        slippage: 0.0005,
+
+        allowShortSelling: false,
+
+        persistPortfolio: true,
 
         storageKey: "crypto_prediction_portfolio",
 
-        watchlistKey: "crypto_prediction_watchlist",
+        tradeHistoryKey: "crypto_prediction_trades"
 
-        saveTransactions: true
     },
 
+    // =====================================
+    // DASHBOARD CONFIGURATION
+    // =====================================
 
-    // --------------------------------------------------
-    // USER INTERFACE
-    // --------------------------------------------------
-
-    UI: {
-
-        defaultPage: "dashboard",
-
-        pages: [
-
-            "dashboard",
-            "markets",
-            "analysis",
-            "signals",
-            "forecast",
-            "portfolio",
-            "settings"
-
-        ],
-
-        defaultCoin: "bitcoin",
-
-        defaultChartRange: "1D",
+    dashboard: {
 
         showMarketOverview: true,
 
-        showTopMovers: true,
+        showTopCoins: true,
 
-        showSignalPanel: true,
+        showPredictionSignals: true,
+
+        showPortfolio: true,
+
+        showMarketSentiment: true,
 
         showTechnicalIndicators: true,
 
-        showVolume: true,
+        showVolumeAnalysis: true,
 
         showWatchlist: true,
 
-        mobileResponsive: true
+        defaultSort: "market_cap",
+
+        itemsPerPage: 50
+
+    },
+
+    // =====================================
+    // INTERFACE COLORS
+    // =====================================
+
+    colors: {
+
+        background: "#0B1120",
+
+        surface: "#111B2E",
+
+        surfaceSecondary: "#17243A",
+
+        border: "#26354B",
+
+        text: "#E8EEF7",
+
+        textSecondary: "#91A0B5",
+
+        primary: "#3B82F6",
+
+        bullish: "#22C997",
+
+        bearish: "#EF5350",
+
+        neutral: "#F5B942",
+
+        chartGrid: "#26354B",
+
+        chartCrosshair: "#A5B4C8",
+
+        chartBackground: "#0B1120"
+
+    },
+
+    // =====================================
+    // APPLICATION BEHAVIOR
+    // =====================================
+
+    behavior: {
+
+        autoRefresh: true,
+
+        autoUpdateCharts: true,
+
+        rememberSelectedCoin: true,
+
+        rememberChartInterval: true,
+
+        showLoadingIndicators: true,
+
+        showNotifications: true,
+
+        handleNetworkErrors: true
+
     }
 
 };
 
 
-// ------------------------------------------------------
-// SHARED CONFIGURATION EXPORTS
-// ------------------------------------------------------
+// =====================================
+// SUPPORTED COIN SYMBOLS
+// =====================================
 
-export const API_CONFIG = APP_CONFIG.API;
+// The actual top 50 list is retrieved
+// dynamically from CoinGecko.
+// This list provides initial watchlist
+// preferences, not a fixed ranking.
 
-export const MARKET_CONFIG = APP_CONFIG.MARKET;
+export const DEFAULT_WATCHLIST = [
 
-export const CHART_CONFIG = APP_CONFIG.CHART;
+    "BTC",
+    "ETH",
+    "USDT",
+    "BNB",
+    "XRP",
+    "SOL",
+    "USDC",
+    "TRX",
+    "DOGE",
+    "ADA",
+    "BCH",
+    "LINK",
+    "AVAX",
+    "XLM",
+    "TON",
+    "SHIB",
+    "DOT",
+    "SUI",
+    "LTC",
+    "HBAR",
+    "UNI",
+    "NEAR",
+    "APT",
+    "AAVE",
+    "ETC"
 
-export const INDICATOR_CONFIG = APP_CONFIG.INDICATORS;
-
-export const SIGNAL_CONFIG = APP_CONFIG.SIGNALS;
-
-export const RISK_CONFIG = APP_CONFIG.RISK;
-
-export const PORTFOLIO_CONFIG = APP_CONFIG.PORTFOLIO;
+];
 
 
-// ------------------------------------------------------
-// HELPER: GET TIME RANGE CONFIGURATION
-// ------------------------------------------------------
+// =====================================
+// APPLICATION CONSTANTS
+// =====================================
 
-export function getTimeRange(label) {
+export const CONSTANTS = {
 
-    return APP_CONFIG.TIME_RANGES.find(
-        range => range.label === label
-    ) || APP_CONFIG.TIME_RANGES[0];
+    SIGNALS: {
+
+        STRONG_BUY: "STRONG BUY",
+
+        BUY: "BUY",
+
+        HOLD: "HOLD",
+
+        SELL: "SELL",
+
+        STRONG_SELL: "STRONG SELL"
+
+    },
+
+    TIMEFRAMES: [
+
+        "1d",
+        "7d",
+        "1m",
+        "3m",
+        "6m",
+        "1y",
+        "3y",
+        "5y",
+        "max"
+
+    ],
+
+    CHART_TYPES: [
+
+        "candlestick",
+        "line",
+        "area",
+        "bar"
+
+    ],
+
+    DEFAULT_TIMEOUT: 15000,
+
+    MAX_API_RETRIES: 3
+
+};
+
+
+// =====================================
+// HELPER: GET INTERVAL CONFIGURATION
+// =====================================
+
+export function getIntervalConfig(interval) {
+
+    return APP_CONFIG.charts.intervals[interval]
+        || APP_CONFIG.charts.intervals["1d"];
 
 }
 
 
-// ------------------------------------------------------
-// HELPER: GET INDICATOR CONFIGURATION
-// ------------------------------------------------------
+// =====================================
+// HELPER: FORMAT SIGNAL
+// =====================================
 
-export function getIndicatorConfig(category, name) {
+export function getSignal(score) {
 
-    return APP_CONFIG.INDICATORS?.[category]?.[name] ?? null;
+    const thresholds = APP_CONFIG.prediction.thresholds;
 
-}
+    if (score >= thresholds.strongBuy) {
 
+        return CONSTANTS.SIGNALS.STRONG_BUY;
 
-// ------------------------------------------------------
-// HELPER: GET SIGNAL CATEGORY
-// ------------------------------------------------------
-
-export function getSignalCategory(score) {
-
-    if (score >= 75) return "STRONG BUY";
-
-    if (score >= 60) return "BUY";
-
-    if (score > 40) return "HOLD";
-
-    if (score >= 25) return "SELL";
-
-    return "STRONG SELL";
-
-}
-
-
-// ------------------------------------------------------
-// HELPER: FORMAT CURRENCY
-// ------------------------------------------------------
-
-export function formatPrice(value) {
-
-    if (!Number.isFinite(Number(value))) {
-        return "--";
     }
 
-    return new Intl.NumberFormat(
-        APP_CONFIG.locale,
-        {
-            style: "currency",
-            currency: APP_CONFIG.currency,
-            maximumFractionDigits: 8
-        }
-    ).format(value);
+    if (score >= thresholds.buy) {
+
+        return CONSTANTS.SIGNALS.BUY;
+
+    }
+
+    if (score <= thresholds.strongSell) {
+
+        return CONSTANTS.SIGNALS.STRONG_SELL;
+
+    }
+
+    if (score <= thresholds.sell) {
+
+        return CONSTANTS.SIGNALS.SELL;
+
+    }
+
+    return CONSTANTS.SIGNALS.HOLD;
 
 }
 
 
-// ------------------------------------------------------
+// =====================================
+// HELPER: FORMAT PRICE
+// =====================================
+
+export function formatPrice(price) {
+
+    if (!Number.isFinite(Number(price))) {
+
+        return "--";
+
+    }
+
+    return new Intl.NumberFormat("en-US", {
+
+        style: "currency",
+
+        currency: APP_CONFIG.market.currency.toUpperCase(),
+
+        maximumFractionDigits:
+            Number(price) < 1 ? 6 : 2
+
+    }).format(price);
+
+}
+
+
+// =====================================
 // HELPER: FORMAT PERCENTAGE
-// ------------------------------------------------------
+// =====================================
 
 export function formatPercentage(value) {
 
     if (!Number.isFinite(Number(value))) {
+
         return "--";
+
     }
 
     const number = Number(value);
 
-    return `${number > 0 ? "+" : ""}${number.toFixed(2)}%`;
+    return `${number >= 0 ? "+" : ""}${number.toFixed(2)}%`;
+
+}
+
+
+// =====================================
+// HELPER: VALIDATE PREDICTION SCORE
+// =====================================
+
+export function validatePredictionScore(score) {
+
+    return Number.isFinite(score)
+        && score >= -100
+        && score <= 100;
 
 }
