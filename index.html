@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0"
+
+<meta name="description" content="Crypto Prediction - Advanced cryptocurrency market analysis, interactive charts, technical indicators and statistical forecasting."
+
+<meta name="theme-color" content="#080d18">
+
+<title>Crypto Prediction | Advanced Trading Analytics</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<!-- TradingView Lightweight Charts -->
+
+<script src="https://unpkg.com/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
+
+</head>
+
+<body>
+
+<div class="app-container">
+
+<!-- ======================================================
+HEADER
+====================================================== -->
+
+<header class="app-header">
+
+<div class="logo">
+
+  <div class="logo-icon">₿</div>
+
+  <div>
+    <div>CRYPTO PREDICTION</div>
+
+    <div class="text-muted text-small">
+      ADVANCED MARKET INTELLIGENCE
+    </div>
+  </div>
+
+</div>
+
+<div class="header-actions">
+
+  <span id="app-status">
+    Initializing...
+  </span>
+
+  <button id="refresh-data" class="btn-primary">
+    ↻ Refresh
+  </button>
+
+</div>
+
+
+</header>
+
+<main class="main-content">
+
+<!-- ====================================================
+     MARKET OVERVIEW
+     ==================================================== -->
+
+<section class="market-summary">
+
+  <div class="summary-card">
+
+    <div class="summary-label">
+      Selected Cryptocurrency
+    </div>
+
+    <div class="summary-value" id="coin-symbol">
+      BTC
+    </div>
+
+    <div class="summary-change">
+      <span id="coin-change">--</span>
+    </div>
+
+  </div>
+
+
+  <div class="summary-card">
+
+    <div class="summary-label">
+      Current Price
+    </div>
+
+    <div class="summary-value" id="coin-price">
+      --
+    </div>
+
+    <div class="summary-change text-muted">
+      USD
+    </div>
+
+  </div>
+
+
+  <div class="summary-card">
+
+    <div class="summary-label">
+      AI Signal Score
+    </div>
+
+    <div class="summary-value" id="signal-score">
+      --
+    </div>
+
+    <div class="summary-change">
+      Technical analysis
+    </div>
+
+  </div>
+
+
+  <div class="summary-card">
+
+    <div class="summary-label">
+      Last Analysis
+    </div>
+
+    <div class="summary-value" id="analysis-updated">
+      --
+    </div>
+
+    <div class="summary-change text-muted">
+      Automatic updates
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ====================================================
+     LOADING
+     ==================================================== -->
+
+<div id="loading-indicator" hidden>
+
+  <div class="loader"></div>
+
+  <p>Analyzing cryptocurrency market...</p>
+
+</div>
+
+
+<!-- ====================================================
+     SELECTED COIN
+     ==================================================== -->
+
+<section class="card">
+
+  <div class="coin-heading">
+
+    <div>
+
+      <div class="text-muted text-small">
+        SELECTED ASSET
+      </div>
+
+      <div class="coin-name" id="coin-name">
+        Bitcoin
+      </div>
+
+    </div>
+
+
+    <div>
+
+      <label for="coin-selector" class="text-muted">
+        Select cryptocurrency
+      </label>
+
+      <select
+        id="coin-selector"
+        class="coin-selector"
+      >
+        <option value="bitcoin">
+          Loading cryptocurrencies...
+        </option>
+      </select>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ====================================================
+     CHART AND SIGNAL
+     ==================================================== -->
+
+<section class="dashboard-grid">
+
+  <!-- MAIN CHART -->
+
+  <div class="card">
+
+    <div class="card-header">
+
+      <div>
+
+        <h2 class="card-title">
+          Price Analysis
+        </h2>
+
+        <div class="card-subtitle">
+          Interactive historical candlestick chart
+        </div>
+
+      </div>
+
+      <span class="text-muted text-small">
+        OHLCV
+      </span>
+
+    </div>
+
+
+    <!-- TIMEFRAMES -->
+
+    <div class="chart-toolbar">
+
+      <div class="timeframe-buttons">
+
+        <button data-timeframe="1D" class="active">
+          1D
+        </button>
+
+        <button data-timeframe="7D">
+          7D
+        </button>
+
+        <button data-timeframe="1M">
+          1M
+        </button>
+
+        <button data-timeframe="3M">
+          3M
+        </button>
+
+        <button data-timeframe="6M">
+          6M
+        </button>
+
+        <button data-timeframe="1Y">
+          1Y
+        </button>
+
+        <button data-timeframe="MAX">
+          MAX
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- CROSSHAIR INFORMATION -->
+
+    <div
+      id="chart-crosshair-info"
+      class="chart-crosshair-info"
+      hidden
+    >
+
+      <span>
+        Time:
+        <strong id="crosshair-time">--</strong>
+      </span>
+
+      <span>
+        Open:
+        <strong id="crosshair-open">--</strong>
+      </span>
+
+      <span>
+        High:
+        <strong id="crosshair-high">--</strong>
+      </span>
+
+      <span>
+        Low:
+        <strong id="crosshair-low">--</strong>
+      </span>
+
+      <span>
+        Close:
+        <strong id="crosshair-price">--</strong>
+      </span>
+
+    </div>
+
+
+    <!-- MAIN CHART CONTAINER -->
+
+    <div
+      id="main-chart"
+      class="chart-container"
+    ></div>
+
+
+    <!-- INDICATOR TOGGLES -->
+
+    <div class="indicator-controls">
+
+      <label class="indicator-toggle">
+
+        <input
+          type="checkbox"
+          data-indicator="sma20"
+          checked
+        >
+
+        SMA 20
+
+      </label>
+
+
+      <label class="indicator-toggle">
+
+        <input
+          type="checkbox"
+          data-indicator="ema50"
+          checked
+        >
+
+        EMA 50
+
+      </label>
+
+
+      <label class="indicator-toggle">
+
+        <input
+          type="checkbox"
+          data-indicator="bollinger"
+        >
+
+        Bollinger Bands
+
+      </label>
+
+
+      <label class="indicator-toggle">
+
+        <input
+          type="checkbox"
+          data-indicator="volume"
+          checked
+        >
+
+        Volume
+
+      </label>
+
+
+      <label class="indicator-toggle">
+
+        <input
+          type="checkbox"
+          data-indicator="rsi"
+          checked
+        >
+
+        RSI
+
+      </label>
+
+
+      <label class="indicator-toggle">
+
+        <input
+          type="checkbox"
+          data-indicator="macd"
+          checked
+        >
+
+        MACD
+
+      </label>
+
+    </div>
+
+  </div>
+
+
+  <!-- SIGNAL PANEL -->
+
+  <div class="card signal-card">
+
+    <div class="card-header">
+
+      <h2 class="card-title">
+        Trading Signal
+      </h2>
+
+      <span class="text-muted text-small">
+        Technical model
+      </span>
+
+    </div>
+
+
+    <div class="signal-label">
+      CURRENT RECOMMENDATION
+    </div>
+
+    <div class="mt-10">
+
+      <span id="trading-signal">
+        HOLD
+      </span>
+
+    </div>
+
+
+    <div class="signal-score mt-20" id="signal-score">
+      --
+    </div>
+
+    <div class="text-muted text-small">
+      Signal strength score
+    </div>
+
+
+    <div class="progress-track mt-10">
+
+      <div
+        class="progress-fill"
+        id="signal-progress"
+        style="width:0%"
+      ></div>
+
+    </div>
+
+
+    <p
+      class="signal-description"
+      id="signal-description"
+    >
+      Waiting for market analysis.
+    </p>
+
+
+    <div class="mt-20">
+
+      <h3 class="card-title">
+        Indicator Agreement
+      </h3>
+
+      <div
+        id="trend-breakdown"
+        class="mt-10"
+      >
+
+        <div class="indicator-row">
+          <span>Trend</span>
+          <strong>--</strong>
+        </div>
+
+        <div class="indicator-row">
+          <span>Momentum</span>
+          <strong>--</strong>
+        </div>
+
+        <div class="indicator-row">
+          <span>Moving averages</span>
+          <strong>--</strong>
+        </div>
+
+        <div class="indicator-row">
+          <span>Volume</span>
+          <strong>--</strong>
+        </div>
+
+        <div class="indicator-row">
+          <span>Volatility</span>
+          <strong>--</strong>
+        </div>
+
+        <div class="indicator-row">
+          <span>Support / resistance</span>
+          <strong>--</strong>
+        </div>
+
+        <div class="indicator-row">
+          <span>Sentiment</span>
+          <strong>--</strong>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ====================================================
+     FORECAST
+     ==================================================== -->
+
+<section class="card">
+
+  <div class="card-header">
+
+    <div>
+
+      <h2 class="card-title">
+        Price Forecast
+      </h2>
+
+      <div class="card-subtitle">
+        Statistical projections based on historical prices
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="forecast-grid">
+
+    <div class="forecast-card">
+
+      <div class="forecast-period">
+        1 DAY FORECAST
+      </div>
+
+      <div
+        class="forecast-price"
+        id="1d-price"
+      >
+        --
+      </div>
+
+      <div
+        class="forecast-direction"
+        id="1d-direction"
+      >
+        --
+      </div>
+
+      <div
+        class="forecast-confidence"
+        id="1d-confidence"
+      >
+        Confidence: --
+      </div>
+
+      <div
+        id="1d-change"
+        class="mt-10"
+      >
+        --
+      </div>
+
+    </div>
+
+
+    <div class="forecast-card">
+
+      <div class="forecast-period">
+        7 DAY FORECAST
+      </div>
+
+      <div
+        class="forecast-price"
+        id="7d-price"
+      >
+        --
+      </div>
+
+      <div
+        class="forecast-direction"
+        id="7d-direction"
+      >
+        --
+      </div>
+
+      <div
+        class="forecast-confidence"
+        id="7d-confidence"
+      >
+        Confidence: --
+      </div>
+
+      <div
+        id="7d-change"
+        class="mt-10"
+      >
+        --
+      </div>
+
+    </div>
+
+
+    <div class="forecast-card">
+
+      <div class="forecast-period">
+        30 DAY FORECAST
+      </div>
+
+      <div
+        class="forecast-price"
+        id="30d-price"
+      >
+        --
+      </div>
+
+      <div
+        class="forecast-direction"
+        id="30d-direction"
+      >
+        --
+      </div>
+
+      <div
+        class="forecast-confidence"
+        id="30d-confidence"
+      >
+        Confidence: --
+      </div>
+
+      <div
+        id="30d-change"
+        class="mt-10"
+      >
+        --
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ====================================================
+     TECHNICAL INDICATORS
+     ==================================================== -->
+
+<section class="card">
+
+  <div class="card-header">
+
+    <div>
+
+      <h2 class="card-title">
+        Technical Indicators
+      </h2>
+
+      <div class="card-subtitle">
+        Latest calculated indicator values
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="backtest-grid">
+
+    <div class="backtest-metric">
+
+      <span>RSI (14)</span>
+
+      <strong id="indicator-rsi">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="backtest-metric">
+
+      <span>ATR</span>
+
+      <strong id="indicator-atr">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="backtest-metric">
+
+      <span>ADX</span>
+
+      <strong id="indicator-adx">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="backtest-metric">
+
+      <span>MFI</span>
+
+      <strong id="indicator-mfi">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="backtest-metric">
+
+      <span>CCI</span>
+
+      <strong id="indicator-cci">
+        --
+      </strong>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ====================================================
+     RISK MANAGEMENT
+     ==================================================== -->
+
+<section class="card">
+
+  <div class="card-header">
+
+    <div>
+
+      <h2 class="card-title">
+        Risk Management
+      </h2>
+
+      <div class="card-subtitle">
+        Illustrative levels derived from the signal model
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="risk-grid">
+
+    <div class="risk-item">
+
+      <span>Reference Entry</span>
+
+      <strong id="risk-entry">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="risk-item">
+
+      <span>Stop Loss</span>
+
+      <strong
+        class="risk-stop"
+        id="risk-stop"
+      >
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="risk-item">
+
+      <span>Take Profit</span>
+
+      <strong
+        class="risk-target"
+        id="risk-target"
+      >
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="risk-item">
+
+      <span>Risk / Reward</span>
+
+      <strong id="risk-ratio">
+        --
+      </strong>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ====================================================
+     BACKTEST
+     ==================================================== -->
+
+<section class="card">
+
+  <div class="card-header">
+
+    <div>
+
+      <h2 class="card-title">
+        Strategy Backtesting
+      </h2>
+
+      <div class="card-subtitle">
+        Historical strategy performance
+      </div>
+
+    </div>
+
+    <button
+      id="run-backtest"
+      class="btn-primary"
+    >
+      Run Backtest
+    </button>
+
+  </div>
+
+
+  <div class="backtest-grid">
+
+    <div class="backtest-metric">
+
+      <span>Total Trades</span>
+
+      <strong id="backtest-trades">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="backtest-metric">
+
+      <span>Win Rate</span>
+
+      <strong id="backtest-winrate">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="backtest-metric">
+
+      <span>Total Return</span>
+
+      <strong id="backtest-return">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="backtest-metric">
+
+      <span>Maximum Drawdown</span>
+
+      <strong id="backtest-drawdown">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="backtest-metric">
+
+      <span>Profit Factor</span>
+
+      <strong id="backtest-profit-factor">
+        --
+      </strong>
+
+    </div>
+
+
+    <div class="backtest-metric">
+
+      <span>Final Equity</span>
+
+      <strong id="backtest-equity">
+        --
+      </strong>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ====================================================
+     MARKET WATCHLIST
+     ==================================================== -->
+
+<section class="card">
+
+  <div class="card-header">
+
+    <div>
+
+      <h2 class="card-title">
+        Top 50 Cryptocurrencies
+      </h2>
+
+      <div class="card-subtitle">
+        Market capitalization ranking
+      </div>
+
+    </div>
+
+    <span
+      class="text-muted text-small"
+      id="market-updated"
+    >
+      --
+    </span>
+
+  </div>
+
+
+  <div class="market-controls">
+
+    <input
+      type="search"
+      id="coin-search"
+      class="search-input"
+      placeholder="Search cryptocurrency..."
+      aria-label="Search cryptocurrency"
+    >
+
+    <span class="text-muted text-small">
+      Live market data where available
+    </span>
+
+  </div>
+
+
+  <div class="table-container">
+
+    <table>
+
+      <thead>
+
+        <tr>
+
+          <th>Rank</th>
+
+          <th>Asset</th>
+
+          <th>Price</th>
+
+          <th>24H Change</th>
+
+          <th>Volume</th>
+
+          <th>Market Cap</th>
+
+          <th>Analysis</th>
+
+        </tr>
+
+      </thead>
+
+
+      <tbody id="market-table-body">
+
+        <tr>
+
+          <td colspan="7" class="empty-state">
+            Loading cryptocurrency market data...
+          </td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</section>
+
+
+</main>
+
+<!-- ======================================================
+FOOTER
+====================================================== -->
+
+<footer>
+
+<div>
+  CRYPTO PREDICTION
+</div>
+
+<div class="disclaimer">
+
+  Cryptocurrency market analysis and forecasts are
+  informational estimates only. They are not financial
+  advice, guaranteed predictions or instructions to
+  execute trades.
+
+  Cryptocurrency markets involve substantial risk.
+  Always conduct independent research before investing.
+
+</div>
+
+<div>
+  Powered by public market data and technical analysis.
+</div>
+
+
+</footer>
+
+</div>
+
+<!-- ========================================================
+JAVASCRIPT MODULES
+======================================================== -->
+
+<!-- Configuration -->
+
+<script src="js/config.js"></script>
+
+<!-- API -->
+
+<script src="js/api.js"></script>
+
+<!-- Technical indicators -->
+
+<script src="js/indicators.js"></script>
+
+<!-- Forecast engine -->
+
+<script src="js/forecast.js"></script>
+
+<!-- Signal engine -->
+
+<script src="js/signals.js"></script>
+
+<!-- Backtesting -->
+
+<script src="js/backtest.js"></script>
+
+<!-- Charts -->
+
+<script src="js/chart.js"></script>
+
+<!-- Utilities -->
+
+<script src="js/utils.js"></script>
+
+<!-- Main application -->
+
+<script src="js/app.js"></script>
+
+</body>
+</html>
